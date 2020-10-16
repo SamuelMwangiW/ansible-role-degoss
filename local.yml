@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+
+  vars_files:
+    - defaults/main.yml
+  tasks:
+    - import_tasks: tasks/download-goss.yml

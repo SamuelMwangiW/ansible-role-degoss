@@ -16,3 +16,7 @@ goss_version: latest
 goss_file: null
 goss_addtl_files: []
 goss_addtl_dirs: []
+
+# see https://github.com/naftulikay/ansible-role-degoss/issues/54
+goss_host_binaries: false
+goss_binary_dir: /usr/local/bin/

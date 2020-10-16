@@ -50,3 +50,6 @@ __pycache__
 # Vagrant
 .vagrant/
 *-VBoxSVC-*.log
+
+# IDE files
+.idea

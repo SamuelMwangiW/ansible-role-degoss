@@ -8,12 +8,27 @@
   set_fact:
     degoss_tmp_root: "{{ workdir.stdout.strip() }}"
     degoss_test_dir: "{{ workdir.stdout.strip() }}/tests"
+    goss_download: "{{ False if goss_copy_host_binaries else True }}"
 
 - name: create directories
   file:
-    path: "{{ degoss_test_dir }}"
+    path: "{{ item }}"
     state: directory
   changed_when: false
+  with_items:
+    - '{{ degoss_test_dir }}'
+    - '{{ degoss_tmp_root }}/bin'
+
+- name: Copy goss binaries to remote host
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: 0766
+  when: goss_copy_host_binaries
+  changed_when: false
+  with_items:
+    - { src: '{{ goss_binary_dir }}/goss', dest: '{{ degoss_tmp_root }}/bin/goss' }
+    - { src: '{{ goss_binary_dir }}/dgoss', dest: '{{ degoss_tmp_root }}/bin/dgoss' }
 
 # deploy test files including the main and additional test files
 - name: deploy test files
@@ -42,3 +57,4 @@
     test_file: "{{ goss_file }}"
     tmp_root: "{{ degoss_tmp_root }}"
     variables: "{{ goss_variables | default({}) | to_json }}"
+    download: "{{ goss_download }}"

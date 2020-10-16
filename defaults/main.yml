@@ -19,4 +19,4 @@ goss_addtl_dirs: []
 
 # see https://github.com/naftulikay/ansible-role-degoss/issues/54
 goss_copy_host_binaries: false
-goss_binary_dir: /usr/local/bin/
+goss_binary_dir: /usr/local/bin

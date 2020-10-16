@@ -75,6 +75,11 @@ options:
         required: false
         default: latest
         description: If latest, the latest available Goss version, otherwise the specified version, e.g. 0.3.6.
+    download:
+        type: bool
+        required: false
+        default: true
+        description: Whether to download goss binaries from the Github repo. False if binaries copied via ansible
 examples: []
 """
 
@@ -98,6 +103,7 @@ def main(argv=sys.argv):
             tmp_root=dict(type='path', required=True),
             variables=(dict(type='dict', required=False, default='{}')),
             version=dict(type='str', required=False, default='latest'),
+            download=dict(type='bool', required=False, default=True),
         )
     )).execute()
 
@@ -121,6 +127,7 @@ class Degoss(object):
         self.test_file = self.module.params.get('test_file').split(os.sep)[-1]
         self.tmp_root = self.module.params.get('tmp_root')
         self.variables = self.module.params.get('variables', {})
+        self.download = self.get_bool('download', True)
 
         self._has_run, self._errored = False, False
         self.test_result, self.total_tests, self.failed_tests, self.failed_messages = None, None, None, None
@@ -331,29 +338,30 @@ class Degoss(object):
         self.module.exit_json(**result)
 
     def install(self):
-        """Install the Goss binary."""
-        release_url = self.get_release_url()
+        """Install the Goss binary if not copied to host."""
+        if self.download:
+            release_url = self.get_release_url()
 
-        self.logger.info("Installing the Goss binary from %s into %s", release_url, self.bin_dir)
+            self.logger.info("Installing the Goss binary from %s into %s", release_url, self.bin_dir)
 
-        status, _, response = self.request(release_url)
+            status, _, response = self.request(release_url)
 
-        # write to a file
-        with open(self.executable, 'w') as f:
-            # buffered read at 8KiB chunks
-            chunk = response.read(BUFFER_SIZE)
-
-            while chunk:
-                f.write(chunk)
+            # write to a file
+            with open(self.executable, 'w') as f:
+                # buffered read at 8KiB chunks
                 chunk = response.read(BUFFER_SIZE)
 
-            response.close()
+                while chunk:
+                    f.write(chunk)
+                    chunk = response.read(BUFFER_SIZE)
 
-        if self.os in ('linux', 'darwin'):
-            # make it executable by the current user
-            os.chmod(self.executable, 0o0700)
+                response.close()
 
-        self.logger.debug("Successfully installed the binary to %s", self.executable)
+            if self.os in ('linux', 'darwin'):
+                # make it executable by the current user
+                os.chmod(self.executable, 0o0700)
+
+            self.logger.debug("Successfully installed the binary to %s", self.executable)
 
     def test(self):
         """Execute the test cases."""
